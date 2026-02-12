@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+fastlog_core/target/
+python_bindings/target/

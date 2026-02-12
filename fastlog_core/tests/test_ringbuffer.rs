@@ -13,6 +13,5 @@ fn test_ringbuffer_overwrite() {
 
     let dump = rb.dump();
 
-    assert_eq!(dump[0], vec![9]);
+    assert_eq!(dump, vec![vec![2], vec![3], vec![9]]);
 }
-

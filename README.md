@@ -94,10 +94,9 @@ python3 -m venv venv
 source venv/bin/activate
 pip install maturin
 
-# 2. Build and install the Rust → Python wheel
+# 2. Build and install the Rust → Python bindings
 cd python_bindings
-maturin build --release
-pip install target/wheels/*.whl
+maturin develop --release
 
 # 3. Test the FastLog compression module
 python - << 'EOF'
@@ -105,12 +104,17 @@ from fastlog_py import compress_json, decompress_json
 blob = compress_json([{"ts":1, "msg":"hello"}])
 print(decompress_json(blob))
 EOF
+```
+
+Notes:
+- If `fastlog_py` is not installed, TTFR falls back to a pure-Python LZ4 path.
+- To build a wheel instead of a local develop install, run `maturin build --release` and `pip install target/wheels/*.whl`.
 
 ## 🧵 Usage
 ### Ingesting Logs
 from ttfr_cli.engine import get_engine
 
-engine = get_engine(buffer_mb=512)
+engine = get_engine()
 
 engine.ingest(b"cpu=10% net=20kb/s msg=test")
 engine.ingest(b"ATTACK:T1059 PowerShell execution detected")
@@ -154,6 +158,23 @@ Snapshot size: 0.80 KB
 | lzma    | 0.01  | 509       |
 
 FastLog achieves an ideal trade‑off between high compression and ultra‑low latency, outperforming gzip/zlib in speed while producing smaller payloads.
+
+## 📐 Benchmark Methodology
+
+These numbers are produced by `ttfr_research_suite.py` on the target machine.
+
+Dataset shape:
+- Compression test: 50,000 JSON events shaped as `{"ts": i, "msg": "hello world"}`.
+- Ingest test: 1,000,000 identical byte messages (`b"cpu=3% net=14kb msg=heartbeat"`).
+- MITRE replay test: 200 identical `ATTACK:T1059` byte messages.
+
+Timing:
+- Uses wall-clock `time.time()`; no warmup pass is included by default.
+- Each compression method is measured once per suite run.
+
+CPU specs:
+- Capture with `uname -a` and (on macOS) `sysctl -n machdep.cpu.brand_string`.
+- Report RAM and OS version for cross-machine comparisons.
 
 ## 🛡️ Security Model
 TTFR is engineered for forensic‑grade environments:

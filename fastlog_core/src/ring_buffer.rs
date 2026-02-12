@@ -11,9 +11,8 @@ pub struct RingBuffer {
 }
 
 impl RingBuffer {
-    pub fn new(capacity_bytes: usize) -> Self {
-        // Approx event size: ~60 bytes → we store ~capacity_bytes / 64 events
-        let capacity = (capacity_bytes / 64).max(1);
+    pub fn new(capacity_events: usize) -> Self {
+        let capacity = capacity_events.max(1);
 
         RingBuffer {
             buffer: vec![None; capacity],
@@ -21,6 +20,12 @@ impl RingBuffer {
             write_index: 0,
             len: 0,
         }
+    }
+
+    pub fn new_bytes(capacity_bytes: usize) -> Self {
+        // Approx event size: ~64 bytes → we store ~capacity_bytes / 64 events
+        let capacity = (capacity_bytes / 64).max(1);
+        Self::new(capacity)
     }
 
     /// Push a new event into the ring
@@ -81,4 +86,3 @@ impl RingBuffer {
         out
     }
 }
-
